@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>亿航 EH216-S 全方位安全分析｜自动化车辆安全</title>
+<style>
+  :root{
+    --navy:#16283d; --red:#a83226; --amber:#b4621a; --ink:#1d2733; --sub:#5a6b7b;
+    --line:#e2d9d6; --bg:#f6f4f2; --card:#fff; --soft:#f3ecea; --green:#1f7a4d;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Noto Sans SC","Microsoft YaHei",system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--ink);line-height:1.75}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+  header.hero{background:linear-gradient(135deg,var(--navy) 0%,#3a2420 100%);color:#fff;padding:56px 0 40px}
+  .hero .tag{display:inline-block;font-size:13px;letter-spacing:.12em;background:rgba(255,255,255,.16);padding:4px 12px;border-radius:20px;margin-bottom:16px}
+  .hero h1{font-size:30px;line-height:1.35;font-weight:700;margin-bottom:12px}
+  .hero p.lead{font-size:15px;opacity:.92;max-width:780px}
+  .hero .meta{margin-top:18px;font-size:13px;opacity:.8}
+  nav.toc{background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10}
+  nav.toc .wrap{display:flex;flex-wrap:wrap;gap:4px 18px;padding-top:12px;padding-bottom:12px}
+  nav.toc a{font-size:13.5px;color:var(--red);text-decoration:none}
+  nav.toc a:hover{text-decoration:underline}
+  section{padding:34px 0 6px}
+  h2{font-size:21px;color:var(--navy);border-left:5px solid var(--red);padding-left:12px;margin-bottom:16px}
+  h3{font-size:15.5px;color:var(--ink);margin:16px 0 8px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px 24px;margin-bottom:18px;box-shadow:0 2px 10px rgba(22,40,61,.06)}
+  p{margin-bottom:10px;font-size:14.5px}
+  ul{margin:6px 0 10px 22px;font-size:14.5px}
+  li{margin-bottom:6px}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13.6px}
+  th,td{border:1px solid var(--line);padding:10px 12px;text-align:left;vertical-align:top}
+  th{background:var(--soft);color:var(--navy);font-weight:600}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
+  .mini{background:var(--soft);border-radius:12px;padding:16px}
+  .mini h4{font-size:14px;color:var(--navy);margin-bottom:6px}
+  .mini p{font-size:13.5px;margin:0}
+  .level-h{color:var(--red);font-weight:600}
+  .level-m{color:var(--amber);font-weight:600}
+  .level-l{color:var(--green);font-weight:600}
+  .note{font-size:12.5px;color:var(--sub);border-left:3px solid var(--line);padding-left:12px;margin-top:10px}
+  .refs{font-size:13px;color:var(--sub)}
+  .refs li{margin-bottom:6px}
+  footer{margin-top:30px;padding:26px 0 40px;color:var(--sub);font-size:12.5px;text-align:center}
+  @media(max-width:640px){.hero h1{font-size:23px} .wrap{padding:0 16px} table{font-size:12.5px}}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <span class="tag">课程作业二 · 全方位安全分析</span>
+    <h1>亿航 EH216-S 载人 eVTOL 系统安全工程分析</h1>
+    <p class="lead">承接作业一所选的 EH216-S 多旋翼无人驾驶载人飞行器，本报告从系统安全工程角度，梳理其安全标准框架、危险识别、风险控制、SOTIF 场景风险、应急与运行安全，并给出安全案例骨架与残余风险判断。</p>
+    <div class="meta">课程：自动化车辆安全 / Automated Vehicles Safety　｜　对象：EH216-S 载人 eVTOL　｜　方法：危险识别—风险分析—控制措施—验证证据</div>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="wrap">
+    <a href="#s1">执行摘要</a>
+    <a href="#s2">安全边界与标准框架</a>
+    <a href="#s3">危险识别总览</a>
+    <a href="#s4">关键子系统风险分析</a>
+    <a href="#s5">SOTIF 非故障风险</a>
+    <a href="#s6">应急与运行安全</a>
+    <a href="#s7">安全案例骨架</a>
+    <a href="#s8">结论与参考文献</a>
+  </div>
+</nav>
+
+<main class="wrap">
+
+<section id="s1">
+  <h2>1. 执行摘要</h2>
+  <div class="card">
+    <p>EH216-S 是<strong>无人驾驶、多旋翼、纯电</strong>载人 eVTOL，安全问题不能只按汽车碰撞逻辑，也不能只按航空适航逻辑，而要把<strong>飞行失效、地面第三方风险、电动能源风险与自动驾驶误用风险</strong>纳入同一张风险接受框架。</p>
+    <div class="grid">
+      <div class="mini"><h4>主要风险域</h4><p>动力推进失效、飞控与导航失效、电池热失控、感知避障不足、通信链路丢失、气象与低空风扰、地面人员与起降区风险。</p></div>
+      <div class="mini"><h4>核心安全手段</h4><p>多旋翼动力冗余、多通道飞控余度、故障检测隔离重构、远程监控与应急程序、受控空域运行与地面隔离。</p></div>
+      <div class="mini"><h4>分析口径</h4><p>公开资料支持架构与资质判断；失效概率、可靠性定量数据未完全公开，本报告以风险域与控制措施为主，不下定量安全承诺。</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="s2">
+  <h2>2. 安全边界与标准框架</h2>
+  <div class="card">
+    <p>载人 eVTOL 同时携带乘员、动力电池、多组动力装置与自动驾驶系统，横跨道路/低空运行与航空适航两类监管逻辑。可借鉴以下标准与方法组织安全论证：</p>
+    <table>
+      <tr><th>框架 / 标准</th><th>关注对象</th><th>在本案例中的作用</th></tr>
+      <tr><td>功能安全（ISO 26262 思路）</td><td>电气/电子系统因硬件或软件故障导致的危害</td><td>划分 ASIL 风险等级，明确安全需求、冗余与故障诊断要求</td></tr>
+      <tr><td>SOTIF（ISO 21448）</td><td>无系统故障时，由功能不足、性能边界与可预见误用引起的风险</td><td>识别感知边界、罕见场景与误用，通过场景验证降低风险</td></tr>
+      <tr><td>场景评价框架（ISO 34502 思路）</td><td>任务—场景—危险—控制措施—验证方法映射</td><td>把具体飞行场景转化为可验证的安全需求与测试项</td></tr>
+      <tr><td>航空适航审定（TC/PC/AC/OC，SC-VTOL 思路）</td><td>飞行器设计、生产一致性、适航状态与运营许可</td><td>从设计定型、批量生产到商业运行的合规闭环</td></tr>
+      <tr><td>机载软件/硬件保证（DO-178C / DO-254 思路）</td><td>飞控软件与机载电子硬件的研制保证等级</td><td>支撑高安全等级链路的开发、验证与配置管理</td></tr>
+    </table>
+    <p class="note">标准本身不是“飞行汽车安全证书”，而是把危险、场景、性能边界和验证证据组织起来的方法；最终安全水平以适航审定文件与运营安全案例为准。</p>
+  </div>
+</section>
+
+<section id="s3">
+  <h2>3. 危险识别总览</h2>
+  <div class="card">
+    <p>按“风险域—可能危害—主要成因—控制措施—需验证证据”建立风险清单：</p>
+    <table>
+      <tr><th>风险域</th><th>可能危害</th><th>主要成因</th><th>控制措施</th><th>需验证的证据</th></tr>
+      <tr>
+        <td>动力推进系统</td><td>单组/多组桨组失效导致推力不对称、姿态失控</td>
+        <td>电机/螺旋桨故障、电控失效、桨叶损伤</td>
+        <td>分布式多旋翼冗余；故障检测后推力重新分配；降级飞行与可控着陆</td>
+        <td>故障注入试验、冗余切换验证、故障树分析、桨组失效后姿态可控证据</td>
+      </tr>
+      <tr>
+        <td>飞控与导航</td><td>姿态发散、航线偏离、定位丢失</td>
+        <td>传感器冲突、导航信号受扰、飞控通道故障</td>
+        <td>多通道余度飞控、多源导航融合、表决与故障隔离</td>
+        <td>余度架构分析、传感器失效仿真、硬件在环与故障注入测试</td>
+      </tr>
+      <tr>
+        <td>动力电池与能源</td><td>电量骤降、动力中断、热失控/起火</td>
+        <td>电池衰减、过充过放、单体故障、高温环境</td>
+        <td>电池状态监控、功率管理、热管理与隔离、低电量返航/着陆策略</td>
+        <td>循环寿命与热试验、故障单体隔离验证、热失控扩散抑制证据</td>
+      </tr>
+      <tr>
+        <td>感知与避障</td><td>撞上障碍物、误入禁飞区或人群上空</td>
+        <td>感知不足、净空判断错误、复杂低空环境</td>
+        <td>航线预设与净空校核、环境感知、电子围栏、地面调度复核</td>
+        <td>场景覆盖测试、障碍物识别率、净空与围栏有效性验证</td>
+      </tr>
+      <tr>
+        <td>通信与远程监控</td><td>链路中断导致无法监控或应急干预</td>
+        <td>通信干扰、链路设备故障、调度中心异常</td>
+        <td>链路冗余、失联自动处置程序、本地自主安全策略</td>
+        <td>链路丢失试验、失联决策逻辑验证、地面备份流程</td>
+      </tr>
+      <tr>
+        <td>乘员与地面人员</td><td>乘员伤害、地面人员被坠物/桨波及</td>
+        <td>起降区侵入、约束不足、应急撤离困难、喷流噪声</td>
+        <td>起降区隔离与互锁、乘员约束与安全说明、应急撤离程序、安全距离</td>
+        <td>碰撞与约束评估、隔离区划定、应急撤离演练、第三方风险分析</td>
+      </tr>
+      <tr>
+        <td>环境与气象</td><td>风扰超限、降雨/低能见度导致飞行失控</td>
+        <td>突发大风、阵风、降水、能见度不足</td>
+        <td>气象监测与运行包线限制、超限停飞、航线避开敏感区域</td>
+        <td>飞行包线边界试验、气象判据与停飞规则、典型天气场景验证</td>
+      </tr>
+    </table>
+  </div>
+</section>
+
+<section id="s4">
+  <h2>4. 关键子系统安全分析</h2>
+  <div class="card">
+    <h3>4.1 分布式动力与冗余降级</h3>
+    <p>多旋翼布局的安全优势在于动力单元分散布置：单个桨组或电机失效后，其余单元可通过转速补偿维持姿态。安全分析需明确：允许失效的桨组数量、失效后剩余推力裕度、姿态可控的包线边界，以及在何种条件下必须转入应急着陆。冗余不是“多装几个桨”，而要证明失效后系统仍在安全包线内可控。</p>
+    <h3>4.2 飞控余度与故障管理</h3>
+    <p>飞控是自动驾驶载人飞行的核心链路。应采用多通道余度设计，配合传感器表决、故障检测与隔离；对传感器冲突、通道故障、软件异常等情形定义明确的降级与安全状态。机载软件应按相应研制保证等级开展需求、设计、编码、验证与配置管理。</p>
+    <h3>4.3 电池系统安全</h3>
+    <p>电动载人飞行器把高能量动力电池布置在乘员附近，电池失效不仅影响动力，还可能引发热失控。安全重点包括单体故障隔离、热蔓延抑制、热管理、电量与健康状态估算，以及低电量情况下的返航/着陆策略。电池循环寿命与重复充放后的一致性需要长期数据支撑。</p>
+    <h3>4.4 感知、导航与电子围栏</h3>
+    <p>无人驾驶运行高度依赖预设航线与环境感知。需要校核航线净空、设置电子围栏防止误入敏感区域，并对障碍物识别、定位连续性与调度复核链路进行场景化验证。感知能力在恶劣光照、雨雾、遮挡等条件下的边界应在运行规则中明确。</p>
+  </div>
+</section>
+
+<section id="s5">
+  <h2>5. SOTIF：非故障类风险分析</h2>
+  <div class="card">
+    <p>不少风险并不来自硬件或软件故障，而来自系统功能不足、性能边界和可预见误用。对 EH216-S 这类自动驾驶载人飞行器，SOTIF 尤其需要关注：</p>
+    <ul>
+      <li><strong>感知边界：</strong>雨雾、强光、夜间、低空遮挡等条件下，环境感知与净空判断能力下降。</li>
+      <li><strong>罕见与边缘场景：</strong>突发阵风、地面人员临时进入起降区、周边漂浮物、相邻飞行器接近等低频次场景。</li>
+      <li><strong>可预见误用：</strong>乘员对模式边界误解、非授权操作、超包线飞行、在不适宜天气强行起飞。</li>
+      <li><strong>人机分工误解：</strong>无人驾驶状态下，乘员与地面调度的职责边界不清，应急时谁来决策、如何干预需要明确。</li>
+    </ul>
+    <p>按 ISO 21448 思路，应识别这些可预见的功能不足与误用，通过场景设计、运行限制、培训告知与验证证据把风险降到可接受水平；场景定义越清楚，安全需求与验证项目才越一致。</p>
+  </div>
+</section>
+
+<section id="s6">
+  <h2>6. 应急与运行安全</h2>
+  <div class="card">
+    <div class="grid">
+      <div class="mini"><h4>应急着陆与回收</h4><p>定义动力不足、链路丢失、电池异常等情形下的应急着陆区、下降策略与地面处置流程；明确不可避免迫降时的人员与第三方风险控制。</p></div>
+      <div class="mini"><h4>起降区与隔离</h4><p>划定起降安全距离与隔离区，设置人员侵入互锁；评估桨叶、喷流、噪声对地面人员的影响。</p></div>
+      <div class="mini"><h4>运行程序与人员资质</h4><p>制定标准作业程序（SOP），明确调度人员、地勤与乘员的职责；乘员准入、健康限制与知情告知纳入流程。</p></div>
+      <div class="mini"><h4>气象与运行包线</h4><p>建立风速、降水、能见度等判据，超出包线即停飞；航线避开人群密集区、重要设施与复杂地形。</p></div>
+    </div>
+    <p class="note">展示型、体验型与交通型运行的安全要求逐级提高：固定场地演示可先建立受控场地安全程序；面向公共通勤，则必须纳入空域管理、保险、维护与事故报告体系。</p>
+  </div>
+</section>
+
+<section id="s7">
+  <h2>7. 安全案例骨架与残余风险</h2>
+  <div class="card">
+    <p>可信的工程化安全论证应在开发早期建立“安全案例”，而不是定型后补文件。建议骨架包括：</p>
+    <ul>
+      <li>任务定义与运行环境：航线、载客、气象、起降场地与暴露人群。</li>
+      <li>系统边界与功能架构：飞行器子系统、地面调度、乘员与外部环境的接口。</li>
+      <li>危险清单与风险接受原则：分级明确哪些风险可接受、哪些需降低或规避。</li>
+      <li>关键安全需求：如禁止非授权起飞、失效后姿态可控、电池异常隔离与泄压、地面侵入互锁等。</li>
+      <li>独立验证方法：仿真、故障注入、硬件在环、场景试验与适航符合性证据。</li>
+      <li>残余风险说明：无法完全消除的风险及其缓解措施与运行限制。</li>
+    </ul>
+    <p>残余风险主要来自：电池长期可靠性数据不足、复杂低空场景覆盖不全、开放空域第三方风险，以及自动驾驶与人机分工的长期运行经验。这些风险应通过运行限制、持续监控与迭代验证逐步收敛，而不宜在证据不足时宣称“绝对安全”。</p>
+  </div>
+</section>
+
+<section id="s8">
+  <h2>8. 结论与参考文献</h2>
+  <div class="card">
+    <p>EH216-S 已具备载人运行的适航与运营合规基础，其安全论证需要把冗余架构、电池安全、感知与 SOTIF、应急运行和地面第三方风险统一纳入系统安全工程框架。当前在受控场地与固定航线上运行具备工程合理性；向城市通勤扩展时，还需补充长期可靠性、边缘场景与开放空域运行的安全证据。</p>
+    <h3>参考文献 References</h3>
+    <ol class="refs">
+      <li>亿航智能 EH216-S 产品与适航、运营许可公开资料。</li>
+      <li>ISO 26262 道路车辆功能安全标准；ISO 21448 道路车辆 SOTIF；ISO 34502 自动驾驶场景评价框架（方法借鉴）。</li>
+      <li>EASA SC-VTOL 垂直起降航空器专用条件；FAA powered-lift 动力升力航空器认证与运行规则（方法借鉴）。</li>
+      <li>DO-178C 机载软件适航考虑、DO-254 机载电子硬件保证指南（方法借鉴）。</li>
+      <li>eVTOL 功能安全、适航审定与城市空中交通安全相关公开研究文献。</li>
+    </ol>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  本页面为课程作业整理，安全分析基于公开资料与通用系统安全工程方法，不构成适航认证或工程承诺。<br>
+  Automated Vehicles Safety · Assignment 2
+</footer>
+
+</body>
+</html>
